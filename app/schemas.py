@@ -6,6 +6,21 @@ class MovieBase(BaseModel):
     discreption:str
     year:int
 class MovieResponce(MovieBase):
-    id:int   
+    id:int
+class MovieAdd(MovieBase):
+    pass       
+class UserBase(BaseModel):
+    username:str
+    password:str
+    role:str
+class UserCreate(BaseModel):
+    username:str
+    password:str
+    role:str    
+class UserResponse(UserBase):
+    id:int
+
+
+        
 
 
