@@ -8,13 +8,13 @@ from app.utils import hash_password
 
 
 
-router= APIRouter()
+router= APIRouter(prefix="/users",tags=["Users"])
 
-@router.get("/users",response_model=List[UserResponse])
+@router.get("/",response_model=List[UserResponse])
 def users(db:Session=Depends(get_db)):
     users=db.query(User).all()
     return users
-@router.post("/users",response_model=UserResponse)
+@router.post("/",response_model=UserResponse)
 def createuser(user:UserCreate,db:Session=Depends(get_db)):
     user.password= hash_password(user.password)
     new_user = User(**user.dict())

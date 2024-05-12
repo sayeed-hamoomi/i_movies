@@ -19,6 +19,15 @@ class User(Base):
     username=Column(String,nullable=False,unique=True)
     password=Column(String,nullable=False)
     role=Column(Enum(Role))
+class Genre(Base):
+    __tablename__="Genres"
+    id=Column(Integer,primary_key=True)
+    genre_name=Column(String,nullable=False,unique=True)
+class Director(Base):
+    __tablename__="directors"
+    id =Column(Integer,primary_key=True)
+    director_name=Column(String,nullable=False,unique=True)
+
 
 
 
