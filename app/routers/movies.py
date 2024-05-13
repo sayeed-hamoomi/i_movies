@@ -1,27 +1,36 @@
 from fastapi import FastAPI,APIRouter,Depends,HTTPException,status
 from app.database import get_db
 from sqlalchemy.orm.session import Session
-from app.models import Movie,Role
+from app.models import Movie,Role,MovieGenre
 from app.schemas import MovieResponce,MovieAdd,MovieUpdate
 from typing import List
 from app.oauth2 import get_current_user
+from sqlalchemy import or_
 
 
 
 router= APIRouter(prefix="/movies",tags=["Movies"])
 
 @router.get("/",response_model=List[MovieResponce])
-def movies(db:Session=Depends(get_db)):
-    movies=db.query(Movie).all()
+def movies(search:str="",page:int = 1,db:Session=Depends(get_db)):
+    limit = 10
+    skip = (page-1)*limit
+    movies=db.query(Movie).filter(or_(Movie.title.icontains(search),Movie.description.icontains(search))).limit(limit).offset(skip).all()
     return movies
 @router.post("/",response_model=MovieResponce)
 def add_movie(movie:MovieAdd,db:Session=Depends(get_db),user=Depends(get_current_user)):
     if user.role != Role.ADMIN:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="admin only")
-    new_movie=Movie(**movie.dict())
+    md=movie.dict()
+    del md["genres"]
+    new_movie=Movie(**md)
     db.add(new_movie)
     db.commit()
     db.refresh(new_movie)
+    for i in movie.genres:
+        mg=MovieGenre(movie_id=new_movie.id,genre_id=i)
+        db.add(mg)
+    db.commit()
     return new_movie
 @router.patch("/{id}")
 def update_movie(id:int,movie:MovieUpdate,db:Session=Depends(get_db),user=Depends(get_current_user) ):

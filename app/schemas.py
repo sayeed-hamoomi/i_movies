@@ -1,18 +1,19 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional,List
 
 
 class MovieBase(BaseModel):
     title:str
-    discreption:str
+    description:str
     year:int
 class MovieResponce(MovieBase):
     id:int
+    
 class MovieAdd(MovieBase):
-    pass
+    genres:List[int]
 class MovieUpdate(BaseModel):
     title:Optional[str]
-    discreption:Optional[str]
+    description:Optional[str]
     year:Optional[str]
 
 
