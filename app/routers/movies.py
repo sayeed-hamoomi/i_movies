@@ -1,8 +1,9 @@
 from fastapi import FastAPI,APIRouter,Depends,HTTPException,status
+from sqlalchemy.sql.functions import coalesce,array_agg
 from app.database import get_db
 from sqlalchemy.orm.session import Session
 from app.models import Movie,Role,MovieGenre
-from app.schemas import MovieResponce,MovieAdd,MovieUpdate
+from app.schemas import MovieResponce,MovieAdd,MovieUpdate, MovieResponse
 from typing import List
 from app.oauth2 import get_current_user
 from sqlalchemy import or_
@@ -11,11 +12,13 @@ from sqlalchemy import or_
 
 router= APIRouter(prefix="/movies",tags=["Movies"])
 
-@router.get("/",response_model=List[MovieResponce])
+# @router.get("/")
+@router.get("/",response_model=List[MovieResponse])
 def movies(search:str="",page:int = 1,db:Session=Depends(get_db)):
     limit = 10
     skip = (page-1)*limit
-    movies=db.query(Movie).filter(or_(Movie.title.icontains(search),Movie.description.icontains(search))).limit(limit).offset(skip).all()
+    movies=db.query(Movie,(coalesce(MovieGenre.genre_id, 0).label("genre_id"))).outerjoin(target=MovieGenre, onclause=Movie.id == MovieGenre.movie_id).filter(or_(Movie.title.icontains(search),Movie.description.icontains(search))).limit(limit).offset(skip).all()
+    print(movies)
     return movies
 @router.post("/",response_model=MovieResponce)
 def add_movie(movie:MovieAdd,db:Session=Depends(get_db),user=Depends(get_current_user)):

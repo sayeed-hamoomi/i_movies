@@ -8,6 +8,13 @@ class MovieBase(BaseModel):
     year:int
 class MovieResponce(MovieBase):
     id:int
+
+class MovieResponse(BaseModel):
+    Movie:MovieResponce
+    genre_id:int
+
+    class Config:
+        from_attributes = True
     
 class MovieAdd(MovieBase):
     genres:List[int]
