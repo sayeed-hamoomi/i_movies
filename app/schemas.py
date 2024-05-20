@@ -11,13 +11,16 @@ class MovieResponce(MovieBase):
 
 class MovieResponse(BaseModel):
     Movie:MovieResponce
-    genre_id:int
+    genres:List[str]
+    directors: List[str]
+    
 
     class Config:
         from_attributes = True
     
 class MovieAdd(MovieBase):
     genres:List[int]
+    directors:List[int]
 class MovieUpdate(BaseModel):
     title:Optional[str]
     description:Optional[str]

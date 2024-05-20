@@ -21,6 +21,7 @@ def create_director(director:AddDirector,db:Session=Depends(get_db),user=Depends
     db.add(new_director)
     db.commit()
     db.refresh(new_director)
+    
     return new_director
 @router.delete("/{id}",response_model=DirectorResponse)
 def delete_director(id:int,db:Session=Depends(get_db),user=Depends(get_current_user)):

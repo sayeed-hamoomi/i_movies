@@ -1,8 +1,9 @@
 from fastapi import FastAPI,APIRouter,Depends,HTTPException,status
-from sqlalchemy.sql.functions import coalesce,array_agg
+from sqlalchemy.sql.functions import coalesce
+from sqlalchemy import func
 from app.database import get_db
 from sqlalchemy.orm.session import Session
-from app.models import Movie,Role,MovieGenre
+from app.models import Movie,Role,MovieGenre,Genre,MovieDirector,Director
 from app.schemas import MovieResponce,MovieAdd,MovieUpdate, MovieResponse
 from typing import List
 from app.oauth2 import get_current_user
@@ -17,8 +18,10 @@ router= APIRouter(prefix="/movies",tags=["Movies"])
 def movies(search:str="",page:int = 1,db:Session=Depends(get_db)):
     limit = 10
     skip = (page-1)*limit
-    movies=db.query(Movie,(coalesce(MovieGenre.genre_id, 0).label("genre_id"))).outerjoin(target=MovieGenre, onclause=Movie.id == MovieGenre.movie_id).filter(or_(Movie.title.icontains(search),Movie.description.icontains(search))).limit(limit).offset(skip).all()
-    print(movies)
+    director_sub=db.query(Director.director_name).outerjoin(target=MovieDirector,onclause=Director.id==MovieDirector.director_id).filter(MovieDirector.movie_id==Movie.id).subquery()
+    genre_sub = db.query(Genre.genre_name).outerjoin(target=MovieGenre,onclause=Genre.id==MovieGenre.genre_id).filter(MovieGenre.movie_id==Movie.id).subquery()
+    movies=db.query(Movie,func.array(genre_sub).label("genres"),func.array(director_sub).label("directors")).filter(or_(Movie.title.icontains(search),Movie.description.icontains(search))).limit(limit).offset(skip).all()
+   
     return movies
 @router.post("/",response_model=MovieResponce)
 def add_movie(movie:MovieAdd,db:Session=Depends(get_db),user=Depends(get_current_user)):
@@ -26,14 +29,19 @@ def add_movie(movie:MovieAdd,db:Session=Depends(get_db),user=Depends(get_current
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="admin only")
     md=movie.dict()
     del md["genres"]
+    del md["directors"]
     new_movie=Movie(**md)
     db.add(new_movie)
     db.commit()
     db.refresh(new_movie)
     for i in movie.genres:
         mg=MovieGenre(movie_id=new_movie.id,genre_id=i)
-        db.add(mg)
+        db.add(mg)    
+    for i in movie.directors:
+        md=MovieDirector(movie_id=new_movie.id,director_id=i)
+        db.add(md)
     db.commit()
+
     return new_movie
 @router.patch("/{id}")
 def update_movie(id:int,movie:MovieUpdate,db:Session=Depends(get_db),user=Depends(get_current_user) ):

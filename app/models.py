@@ -37,5 +37,8 @@ class MovieGenre(Base):
     movie_id =Column(Integer,ForeignKey("movies.id",ondelete='CASCADE'),nullable=False,primary_key=True)
     genre_id =Column(Integer,ForeignKey("Genres.id",ondelete='CASCADE'),nullable=False,primary_key=True)
    
-
+class MovieDirector(Base):
+    __tablename__="movies_directors"
+    movie_id =Column(Integer,ForeignKey("movies.id",ondelete='CASCADE'),nullable=False,primary_key=True)
+    director_id=Column(Integer,ForeignKey("directors.id",ondelete='CASCADE'),nullable=False,primary_key=True)
 
